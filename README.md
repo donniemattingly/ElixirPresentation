@@ -1,6 +1,6 @@
 # Elixir, Erlang and Phoenix
 
-### [Deck](Elixir Presentation.pdf)
+### [Deck](Elixir%20Presentation.pdf)
 
 ### [Demo Project](demo/lib)
 Elixir snippets I used during the presentation
