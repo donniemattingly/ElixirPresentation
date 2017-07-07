@@ -1,0 +1,46 @@
+#.deliver/config
+
+APP="phoenix_chat_example"
+
+BUILD_HOST="ec2-34-226-198-38.compute-1.amazonaws.com"
+BUILD_USER="ubuntu"
+BUILD_AT="/tmp/edeliver/phoenix_chat_example/builds"
+
+STAGING_HOSTS="ec2-34-226-198-38.compute-1.amazonaws.com"
+STAGING_USER="ubuntu"
+DELIVER_TO="/home/ubuntu"
+
+# For *Phoenix* projects, symlink prod.secret.exs to our tmp source
+pre_erlang_get_and_update_deps() {
+  local _prod_secret_path="/home/builder/prod.secret.exs"
+  if [ "$TARGET_MIX_ENV" = "prod" ]; then
+    __sync_remote "
+      ln -sfn '$_prod_secret_path' '$BUILD_AT/config/prod.secret.exs'
+    "
+  fi
+}
+
+pre_erlang_clean_compile() {
+
+  status "Building and Compiling Web Assets" # log output prepended with "----->"
+  __sync_remote " # runs the commands on the build host
+    [ -f ~/.profile ] && source ~/.profile # load profile (optional)
+    set -e # fail if any command fails (recommended)
+    cd '$BUILD_AT' # enter the build directory on the build host (required)
+    # prepare something
+    mkdir -p priv/static # required by the phoenix.digest task
+    # run your custom task
+    npm install
+    brunch build
+  "
+
+  status "Running phoenix.digest" # log output prepended with "----->"
+  __sync_remote " # runs the commands on the build host
+    [ -f ~/.profile ] && source ~/.profile # load profile (optional)
+    set -e # fail if any command fails (recommended)
+    cd '$BUILD_AT' # enter the build directory on the build host (required)
+    # prepare something
+    mkdir -p priv/static # required by the phoenix.digest task
+    # run your custom task
+    APP='$APP' MIX_ENV='$TARGET_MIX_ENV' $MIX_CMD phoenix.digest $SILENCE
+  "
